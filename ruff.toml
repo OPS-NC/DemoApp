@@ -1,0 +1,6 @@
+target-version = "py312"
+line-length = 100
+exclude = [".venv", ".venv-test", "__pycache__"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4"]

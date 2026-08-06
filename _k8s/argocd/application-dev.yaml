@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demoapp-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/OPS-NC/DemoApp.git
+    targetRevision: dev
+    path: _k8s/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demoapp-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

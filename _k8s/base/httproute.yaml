@@ -1,0 +1,26 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: demoapp
+  labels:
+    app.kubernetes.io/name: demoapp
+spec:
+  # Placeholder remplacé par overlay (kustomize patch) : dev.demoapp.<DOMAIN> ou demoapp.<DOMAIN>
+  hostnames:
+    - demoapp.k8s.lab.ops.nc
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: main-gateway
+      namespace: envoy-gateway-system
+      sectionName: https
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: demoapp
+          port: 80
