@@ -5,11 +5,12 @@ from zoneinfo import ZoneInfo
 
 import redis
 from asgiref.wsgi import WsgiToAsgi
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, make_response, render_template
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 COUNTER_KEY = os.environ.get("COUNTER_KEY", "demoapp:views")
 TZ_NAME = os.environ.get("TZ", "Pacific/Noumea")
+COMMIT = os.environ.get("COMMIT", "unknown")
 
 app = Flask(__name__)
 redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
@@ -52,7 +53,7 @@ def index():
     hostname, ip = get_host_info()
     time_str, date_str, tz_label, offset = get_time()
     views = incr_views()
-    return render_template(
+    page = render_template(
         "index.html",
         time=time_str,
         date=date_str,
@@ -61,7 +62,12 @@ def index():
         hostname=hostname,
         ip=ip,
         views=views,
+        commit=COMMIT,
     )
+    # Le compteur doit s'incrémenter à chaque visite : pas de cache navigateur.
+    response = make_response(page)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.route("/api/info")
@@ -77,6 +83,7 @@ def api_info():
         hostname=hostname,
         ip=ip,
         views=get_views(),
+        commit=COMMIT,
     )
 
 

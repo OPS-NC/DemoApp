@@ -135,6 +135,16 @@
     word-break: break-all;
   }
 
+  .commit {
+    margin-top: 0.45rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: #6b748c;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  }
+
+  .commit span { color: #97a1b8; }
+
   .badge {
     display: inline-block;
     margin-top: 0.9rem;
@@ -168,6 +178,7 @@
       <div class="label">Machine</div>
       <div class="value mono" id="hostname">{{ hostname }}</div>
       <div class="sub" id="ip">{{ ip }}</div>
+      <div class="commit">commit <span id="commit">{{ commit }}</span></div>
       <span class="badge">Adresse IP interne</span>
     </section>
 

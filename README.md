@@ -35,6 +35,7 @@ compteur de vues persisté dans **Redis** (sans authentification).
 | `COUNTER_KEY` | `demoapp:views` | Clé du compteur |
 | `TZ` | `Pacific/Noumea` | Timezone affichée |
 | `PORT` | `8000` | Port d'écoute |
+| `COMMIT` | `unknown` | SHA court affiché sous l'IP ; réécrit par la CI à chaque déploiement |
 
 ## Lancer en local
 
@@ -64,8 +65,9 @@ Le workflow `.github/workflows/build.yml` se déclenche sur `dev` et `main` :
    la branche comme tag** (plus un tag court de SHA) :
    - branche `dev` → `ghcr.io/ops-nc/demoapp:dev`
    - branche `main` → `ghcr.io/ops-nc/demoapp:main`
+3. **Job `deploy`** — déclenche le redéploiement ArgoCD (voir ci-dessous).
 
-Sur pull request, seul le job `test` est exécuté (pas de push d'image).
+Sur pull request, seuls les jobs `test` s'exécutent (ni push d'image, ni commit).
 
 ---
 
@@ -78,7 +80,7 @@ deux overlays. Chaque overlay surcharge le hostname de l'HTTPRoute via un patch
 ```
 _k8s/
 ├── base/                  deployment · service · httproute · redis
-├── overlays/dev/          → dev.demoapp.k8s.lab.ops.nc, ns demoapp-dev, image :dev,  1 replica
+├── overlays/dev/          → demoapp-dev.k8s.lab.ops.nc, ns demoapp-dev, image :dev,  1 replica
 ├── overlays/prod/         → demoapp.k8s.lab.ops.nc,     ns demoapp,     image :main, 2 replicas
 └── argocd/                Applications ArgoCD prêtes à appliquer
 ```
@@ -89,7 +91,7 @@ L'HTTPRoute est rattachée à la Gateway existante `main-gateway`
 ## Vérifier le rendu avant de déployer
 
 ```bash
-kubectl kustomize _k8s/overlays/dev   | grep -A1 hostnames   # dev.demoapp.k8s.lab.ops.nc
+kubectl kustomize _k8s/overlays/dev   | grep -A1 hostnames   # demoapp-dev.k8s.lab.ops.nc
 kubectl kustomize _k8s/overlays/prod  | grep -A1 hostnames   # demoapp.k8s.lab.ops.nc
 ```
 
@@ -99,7 +101,7 @@ Les manifests fournis pointent chacun vers une branche et un overlay différents
 
 | Application | Branche suivie | Path | Namespace | URL |
 |---|---|---|---|---|
-| `demoapp-dev` | `dev` | `_k8s/overlays/dev` | `demoapp-dev` | https://dev.demoapp.k8s.lab.ops.nc |
+| `demoapp-dev` | `dev` | `_k8s/overlays/dev` | `demoapp-dev` | https://demoapp-dev.k8s.lab.ops.nc |
 | `demoapp` | `main` | `_k8s/overlays/prod` | `demoapp` | https://demoapp.k8s.lab.ops.nc |
 
 ```bash
@@ -109,22 +111,34 @@ kubectl apply -f _k8s/argocd/application-prod.yaml
 
 Les deux Applications sont en `automated` (prune + selfHeal) avec `CreateNamespace=true`.
 
-## Cycle de déploiement
+## Redéploiement automatique (job `deploy`)
 
-1. Push sur `dev` → CI publie `ghcr.io/ops-nc/demoapp:dev` → ArgoCD resynchronise `demoapp-dev`.
-2. Merge `dev` → `main` → CI publie `:main` → ArgoCD resynchronise `demoapp`.
+Le tag d'image est fixe par branche : un nouveau push ne modifie donc aucun manifest, et ArgoCD
+n'a rien à resynchroniser. Le job `deploy` résout ce problème **sans changer de tag** — il réécrit
+l'ENV var `COMMIT` du Deployment avec le SHA court dans
+`_k8s/overlays/<env>/commit-patch.yaml`, puis commite sur la branche courante.
 
-Le tag d'image étant fixe par branche (`imagePullPolicy: Always`), forcer le redéploiement après
-un nouveau build se fait via :
+Modifier une ENV var change le pod template : ArgoCD voit la dérive, sync, et Kubernetes fait un
+rolling update. Comme `imagePullPolicy: Always`, les nouveaux pods tirent l'image fraîche du
+même tag. Le SHA déployé est affiché en petit sous l'IP sur la page.
+
+```
+push sur dev → test → build & push :dev → commit "COMMIT=<sha>" → ArgoCD sync → rollout
+```
+
+**Le commit de la CI ne redéclenche aucun workflow**, via trois protections :
+
+1. Un push authentifié avec le `GITHUB_TOKEN` ne déclenche pas de workflow (garantie GitHub).
+2. Le message de commit porte `[skip ci]`.
+3. `on.push.paths-ignore` exclut `_k8s/overlays/*/commit-patch.yaml`.
+
+Mapping branche → overlay patché : `dev` → `overlays/dev`, `main` → `overlays/prod`.
+
+Redéploiement manuel si besoin :
 
 ```bash
 kubectl rollout restart deploy/demoapp -n demoapp-dev
-# ou, côté ArgoCD
-argocd app actions run demoapp-dev restart --kind Deployment
 ```
-
-> Pour un suivi automatique des nouvelles images, brancher **ArgoCD Image Updater** ou passer la
-> CI en tag immuable (SHA) avec commit du tag dans l'overlay.
 
 ## Notes
 
