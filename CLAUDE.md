@@ -13,7 +13,7 @@ Redis-backed view counter. Deployed to Kubernetes behind Envoy Gateway, delivere
 app.py                    Flask app + WsgiToAsgi wrapper (entrypoint: app:asgi_app)
 templates/index.html      Single page, inline CSS/JS, no build step
 Dockerfile                python:3.12-slim, non-root uid 10001
-.github/workflows/        test (compileall + ruff) -> build/push to GHCR
+.github/workflows/        test (compileall + ruff) -> build/push to GHCR -> trivy scan -> deploy
 _k8s/base/                deployment · service · httproute · redis
 _k8s/overlays/{dev,prod}  namespace, image tag, replicas, hostname patch
 _k8s/argocd/              ArgoCD Application per branch
@@ -42,6 +42,10 @@ cannot serve it.
   hardcoded values.
 - `_k8s/overlays/*/commit-patch.yaml` is **CI-generated** — do not hand-edit it, the `deploy` job
   overwrites the file on every push.
+- The `scan` job (Trivy) gates `deploy`: any fixable `CRITICAL` in the pushed image fails the job,
+  so the `COMMIT` bump never lands and ArgoCD keeps the previous revision. The image is still
+  pushed to GHCR — the gate blocks the rollout, not the build. Fix the CVE (base image or
+  `requirements.txt`) rather than loosening the severity filter.
 
 ## Branches and deployment
 
