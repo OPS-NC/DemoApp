@@ -15,32 +15,6 @@ replicas:
   - name: demoapp
     count: 2
 
+# hostname de l'HTTPRoute : demoapp.k8s.lab.ops.nc
 patches:
   - path: httproute-patch.yaml
-
-# ── Domaine unique, injecté dans le hostname de l'HTTPRoute ──────────────
-# Le patch pose "demoapp.DOMAIN" ; le replacement ci-dessous remplace
-# le 2e label (index 1) par la valeur de `domain`.
-configMapGenerator:
-  - name: demoapp-domain
-    literals:
-      - domain=k8s.lab.ops.nc
-    options:
-      disableNameSuffixHash: true
-      annotations:
-        config.kubernetes.io/local-config: "true"
-
-replacements:
-  - source:
-      kind: ConfigMap
-      name: demoapp-domain
-      fieldPath: data.domain
-    targets:
-      - select:
-          kind: HTTPRoute
-          name: demoapp
-        fieldPaths:
-          - spec.hostnames.0
-        options:
-          delimiter: "."
-          index: 1

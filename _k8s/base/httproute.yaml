@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: demoapp
 spec:
-  # Placeholder remplacé par overlay (kustomize patch) : dev.demoapp.<DOMAIN> ou demoapp.<DOMAIN>
+  # Surchargé par overlay : dev.demoapp.k8s.lab.ops.nc (dev) ou demoapp.k8s.lab.ops.nc (prod)
   hostnames:
     - demoapp.k8s.lab.ops.nc
   parentRefs:
