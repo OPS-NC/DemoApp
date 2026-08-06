@@ -4,4 +4,4 @@ metadata:
   name: demoapp
 spec:
   hostnames:
-    - dev.demoapp.DOMAIN
+    - dev.demoapp.k8s.lab.ops.nc

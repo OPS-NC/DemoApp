@@ -13,7 +13,7 @@ compteur de vues persisté dans **Redis** (sans authentification).
 | Stockage | Redis (`INCR` sur la clé `demoapp:views`) |
 | Conteneur | `python:3.12-slim`, exécution non-root (uid 10001), rootfs read-only |
 | CI | GitHub Actions → build + push sur `ghcr.io/ops-nc/demoapp` |
-| Déploiement | Kustomize (base + overlays `dev` / `prod`), Gateway API |
+| Déploiement | Kustomize (base + overlays `dev` / `prod`), Gateway API (Envoy Gateway) |
 
 > Flask est un framework WSGI : uvicorn étant un serveur ASGI, l'app est exposée via
 > `WsgiToAsgi`. C'est le point d'entrée `app:asgi_app`.
@@ -72,15 +72,14 @@ Sur pull request, seul le job `test` est exécuté (pas de push d'image).
 # Déploiement ArgoCD
 
 Le répertoire `_k8s/` contient un **base** Kustomize (Deployment, Service, HTTPRoute, Redis) et
-deux overlays. Le domaine est défini **une seule fois par overlay** dans un `configMapGenerator`
-local (`domain=k8s.lab.ops.nc`), injecté dans le hostname de l'HTTPRoute via un `replacements`
-Kustomize. Pour changer de domaine, une seule ligne à modifier par overlay.
+deux overlays. Chaque overlay surcharge le hostname de l'HTTPRoute via un patch
+(`httproute-patch.yaml`) : une ligne à modifier pour changer de domaine.
 
 ```
 _k8s/
 ├── base/                  deployment · service · httproute · redis
-├── overlays/dev/          → dev.demoapp.<DOMAIN>, ns demoapp-dev,  image :dev,  1 replica
-├── overlays/prod/         → demoapp.<DOMAIN>,     ns demoapp,      image :main, 2 replicas
+├── overlays/dev/          → dev.demoapp.k8s.lab.ops.nc, ns demoapp-dev, image :dev,  1 replica
+├── overlays/prod/         → demoapp.k8s.lab.ops.nc,     ns demoapp,     image :main, 2 replicas
 └── argocd/                Applications ArgoCD prêtes à appliquer
 ```
 
