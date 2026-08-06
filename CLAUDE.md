@@ -38,13 +38,16 @@ cannot serve it.
   returns 503 so Kubernetes pulls the pod out of rotation.
 - Container runs as uid 10001 with `readOnlyRootFilesystem: true`. Any code writing to disk
   breaks the deployment — keep `PYTHONDONTWRITEBYTECODE=1`.
-- All config comes from env vars: `REDIS_URL`, `COUNTER_KEY`, `TZ`, `PORT`. No hardcoded values.
+- All config comes from env vars: `REDIS_URL`, `COUNTER_KEY`, `TZ`, `PORT`, `COMMIT`. No
+  hardcoded values.
+- `_k8s/overlays/*/commit-patch.yaml` is **CI-generated** — do not hand-edit it, the `deploy` job
+  overwrites the file on every push.
 
 ## Branches and deployment
 
 | Branch | Image tag | Overlay | Namespace | Hostname |
 |---|---|---|---|---|
-| `dev` | `:dev` | `_k8s/overlays/dev` | `demoapp-dev` | `dev.demoapp.k8s.lab.ops.nc` |
+| `dev` | `:dev` | `_k8s/overlays/dev` | `demoapp-dev` | `demoapp-dev.k8s.lab.ops.nc` |
 | `main` | `:main` | `_k8s/overlays/prod` | `demoapp` | `demoapp.k8s.lab.ops.nc` |
 
 Work on `dev`. Reach `main` through a PR. Hostnames are written literally in each overlay's
@@ -68,5 +71,8 @@ Never mark k8s or Docker work done without rendering the manifests or running th
 ## Known limitations
 
 - Redis uses an `emptyDir`: the counter resets when the pod restarts.
-- Image tags are mutable per branch, so a new build needs `kubectl rollout restart` to land.
+- Image tags are mutable per branch. Redeployment is triggered by the `deploy` job bumping the
+  `COMMIT` env var, which changes the pod template and makes ArgoCD roll the pods. That commit
+  must never retrigger CI: it relies on `GITHUB_TOKEN` pushes not firing workflows, plus
+  `[skip ci]` and `paths-ignore`. Keep all three if you touch the workflow.
 - `/api/info` returns the server date in the server locale; the browser reformats it in French.

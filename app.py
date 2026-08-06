@@ -10,6 +10,7 @@ from flask import Flask, jsonify, render_template
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 COUNTER_KEY = os.environ.get("COUNTER_KEY", "demoapp:views")
 TZ_NAME = os.environ.get("TZ", "Pacific/Noumea")
+COMMIT = os.environ.get("COMMIT", "unknown")
 
 app = Flask(__name__)
 redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
@@ -61,6 +62,7 @@ def index():
         hostname=hostname,
         ip=ip,
         views=views,
+        commit=COMMIT,
     )
 
 
@@ -77,6 +79,7 @@ def api_info():
         hostname=hostname,
         ip=ip,
         views=get_views(),
+        commit=COMMIT,
     )
 
 

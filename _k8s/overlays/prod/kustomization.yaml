@@ -15,6 +15,8 @@ replicas:
   - name: demoapp
     count: 2
 
-# hostname de l'HTTPRoute : demoapp.k8s.lab.ops.nc
+# httproute-patch : hostname demoapp.k8s.lab.ops.nc
+# commit-patch    : ENV COMMIT, réécrit par la CI pour forcer le redéploiement ArgoCD
 patches:
   - path: httproute-patch.yaml
+  - path: commit-patch.yaml

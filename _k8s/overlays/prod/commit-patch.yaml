@@ -1,0 +1,15 @@
+# Généré par la CI (job "deploy") à chaque push sur main.
+# La modification de cette ENV var change le pod template -> ArgoCD redéploie
+# sans changer le tag de l'image.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demoapp
+spec:
+  template:
+    spec:
+      containers:
+        - name: demoapp
+          env:
+            - name: COMMIT
+              value: "initial"

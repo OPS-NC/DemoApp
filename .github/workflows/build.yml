@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - dev
+    # Filet de sécurité anti-boucle : le commit du job "deploy" ne touche que ce fichier.
+    # (Un push fait avec GITHUB_TOKEN ne déclenche déjà aucun workflow.)
+    paths-ignore:
+      - '_k8s/overlays/*/commit-patch.yaml'
   pull_request:
     branches:
       - main
@@ -81,3 +85,79 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    name: Trigger ArgoCD redeploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: write
+    concurrency:
+      group: deploy-${{ github.ref_name }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Résoudre l'overlay cible
+        id: overlay
+        run: |
+          case "${{ github.ref_name }}" in
+            main) echo "path=_k8s/overlays/prod" >> "$GITHUB_OUTPUT" ;;
+            dev)  echo "path=_k8s/overlays/dev"  >> "$GITHUB_OUTPUT" ;;
+            *)    echo "Branche non gérée : ${{ github.ref_name }}" >&2; exit 1 ;;
+          esac
+
+      - name: Écrire l'ENV COMMIT dans le patch kustomize
+        env:
+          PATCH: ${{ steps.overlay.outputs.path }}/commit-patch.yaml
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          cat > "$PATCH" <<YAML
+          # Généré par la CI (job "deploy") à chaque push sur ${BRANCH}.
+          # La modification de cette ENV var change le pod template -> ArgoCD redéploie
+          # sans changer le tag de l'image.
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: demoapp
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: demoapp
+                    env:
+                      - name: COMMIT
+                        value: "${SHORT_SHA}"
+          YAML
+          cat "$PATCH"
+
+      - name: Commit & push (sans redéclencher de workflow)
+        env:
+          PATCH: ${{ steps.overlay.outputs.path }}/commit-patch.yaml
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- "$PATCH"; then
+            echo "COMMIT déjà à jour, rien à pousser."
+            exit 0
+          fi
+
+          git add "$PATCH"
+          git commit -m "[skip ci] [Claude] chore: COMMIT=${GITHUB_SHA::7} (${BRANCH})"
+
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:${BRANCH}"; then
+              echo "Poussé (tentative ${attempt})."
+              exit 0
+            fi
+            echo "Push refusé, rebase puis nouvelle tentative..."
+            git pull --rebase origin "${BRANCH}"
+          done
+          echo "Échec du push après 3 tentatives." >&2
+          exit 1
