@@ -75,4 +75,11 @@ Never mark k8s or Docker work done without rendering the manifests or running th
   `COMMIT` env var, which changes the pod template and makes ArgoCD roll the pods. That commit
   must never retrigger CI: it relies on `GITHUB_TOKEN` pushes not firing workflows, plus
   `[skip ci]` and `paths-ignore`. Keep all three if you touch the workflow.
+
+## Gotcha: commit messages
+
+GitHub scans the whole commit message — subject *and* body — for the skip marker (`skip ci`
+in square brackets). Never write that literal sequence in a commit message when describing
+this mechanism, or your push silently produces no CI run. Referring to it inside files
+(README, workflow YAML) is safe; only the commit message matters.
 - `/api/info` returns the server date in the server locale; the browser reformats it in French.
