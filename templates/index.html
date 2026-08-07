@@ -3,18 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light">
 <title>DemoApp</title>
 <style>
   :root {
-    --bg: #f5f7fb;
-    --card: rgba(255, 255, 255, 0.72);
-    --border: rgba(15, 23, 42, 0.09);
-    --text: #131a2b;
-    --muted: #5c6780;
-    --accent: #2f5fe0;
-    --accent-2: #8a3fe0;
-    --accent-3: #0f9e72;
+    --bg: #0b0f1a;
+    --card: rgba(255, 255, 255, 0.04);
+    --border: rgba(255, 255, 255, 0.09);
+    --text: #f2f5fb;
+    --muted: #8b95ad;
+    --accent: #5b8cff;
+    --accent-2: #b06bff;
+    --accent-3: #2ee6a8;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,9 +37,9 @@
     position: fixed;
     inset: -30%;
     background:
-      radial-gradient(45rem 45rem at 20% 15%, rgba(47, 95, 224, 0.16), transparent 60%),
-      radial-gradient(40rem 40rem at 80% 85%, rgba(138, 63, 224, 0.14), transparent 60%),
-      radial-gradient(35rem 35rem at 60% 30%, rgba(15, 158, 114, 0.12), transparent 60%);
+      radial-gradient(45rem 45rem at 20% 15%, rgba(91, 140, 255, 0.20), transparent 60%),
+      radial-gradient(40rem 40rem at 80% 85%, rgba(176, 107, 255, 0.18), transparent 60%),
+      radial-gradient(35rem 35rem at 60% 30%, rgba(46, 230, 168, 0.10), transparent 60%);
     filter: blur(20px);
     z-index: -1;
     animation: drift 24s ease-in-out infinite alternate;
@@ -87,12 +86,12 @@
     background: var(--card);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    box-shadow: 0 1.25rem 2.5rem rgba(15, 23, 42, 0.08);
+    box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.35);
     text-align: center;
     transition: transform 0.25s ease, border-color 0.25s ease;
   }
 
-  .card:hover { transform: translateY(-4px); border-color: rgba(15, 23, 42, 0.18); }
+  .card:hover { transform: translateY(-4px); border-color: rgba(255, 255, 255, 0.2); }
 
   .card::after {
     content: "";
@@ -140,11 +139,11 @@
     margin-top: 0.45rem;
     font-size: 0.68rem;
     letter-spacing: 0.04em;
-    color: #7b8399;
+    color: #6b748c;
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   }
 
-  .commit span { color: #454f68; }
+  .commit span { color: #97a1b8; }
 
   .badge {
     display: inline-block;
@@ -158,7 +157,7 @@
 
   footer { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.05em; }
 
-  .offline { color: #d93636; }
+  .offline { color: #ff7b7b; }
 </style>
 </head>
 <body>
