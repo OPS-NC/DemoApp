@@ -1,4 +1,6 @@
 # DemoApp
+[![Test, Build & Push](https://github.com/OPS-NC/DemoApp/actions/workflows/build.yml/badge.svg)](https://github.com/OPS-NC/DemoApp/actions/workflows/build.yml)
+
 
 Application de démonstration **Python / Flask** servie par **uvicorn**, affichant sur sa page
 d'accueil trois cartes : l'heure locale avec sa timezone, le hostname et l'IP du pod, et un
