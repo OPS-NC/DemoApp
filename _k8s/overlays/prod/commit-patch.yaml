@@ -12,4 +12,4 @@ spec:
         - name: demoapp
           env:
             - name: COMMIT
-              value: "9c234a1"
+              value: "90c11f6"
