@@ -3,17 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>DemoApp</title>
 <style>
   :root {
-    --bg: #0b0f1a;
-    --card: rgba(255, 255, 255, 0.04);
-    --border: rgba(255, 255, 255, 0.09);
-    --text: #f2f5fb;
-    --muted: #8b95ad;
-    --accent: #5b8cff;
-    --accent-2: #b06bff;
-    --accent-3: #2ee6a8;
+    --bg: #eef1f7;
+    --surface: #ffffff;
+    --line: #e2e7f1;
+    --line-strong: #cdd5e4;
+    --text: #101423;
+    --muted: #5c667d;
+    --faint: #8b95a9;
+    --accent: #2544d8;
+    --accent-2: #6d28d9;
+    --accent-3: #0d8f6b;
+    --danger: #c62a25;
+    --grid: rgba(16, 20, 35, 0.045);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,17 +37,30 @@
     overflow-x: hidden;
   }
 
+  /* Deux couches d'ambiance : teintes diffuses + trame technique, pensées pour le fond clair. */
   body::before {
     content: "";
     position: fixed;
     inset: -30%;
     background:
-      radial-gradient(45rem 45rem at 20% 15%, rgba(91, 140, 255, 0.20), transparent 60%),
-      radial-gradient(40rem 40rem at 80% 85%, rgba(176, 107, 255, 0.18), transparent 60%),
-      radial-gradient(35rem 35rem at 60% 30%, rgba(46, 230, 168, 0.10), transparent 60%);
-    filter: blur(20px);
+      radial-gradient(45rem 45rem at 18% 12%, rgba(37, 68, 216, 0.10), transparent 62%),
+      radial-gradient(40rem 40rem at 82% 88%, rgba(109, 40, 217, 0.09), transparent 62%),
+      radial-gradient(35rem 35rem at 62% 28%, rgba(13, 143, 107, 0.07), transparent 62%);
+    z-index: -2;
+    animation: drift 32s ease-in-out infinite alternate;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 4rem 4rem;
+    mask-image: radial-gradient(70% 60% at 50% 40%, #000, transparent 100%);
+    -webkit-mask-image: radial-gradient(70% 60% at 50% 40%, #000, transparent 100%);
     z-index: -1;
-    animation: drift 24s ease-in-out infinite alternate;
   }
 
   @keyframes drift {
@@ -80,25 +98,33 @@
 
   .card {
     position: relative;
+    overflow: hidden;
     padding: 2.25rem 2rem;
-    border: 1px solid var(--border);
+    border: 1px solid var(--line);
     border-radius: 1.25rem;
-    background: var(--card);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.35);
+    background: var(--surface);
+    box-shadow:
+      0 1px 2px rgba(16, 24, 40, 0.05),
+      0 1.25rem 2.5rem -1rem rgba(16, 24, 40, 0.14);
     text-align: center;
-    transition: transform 0.25s ease, border-color 0.25s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   }
 
-  .card:hover { transform: translateY(-4px); border-color: rgba(255, 255, 255, 0.2); }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--line-strong);
+    box-shadow:
+      0 1px 2px rgba(16, 24, 40, 0.05),
+      0 2rem 3.5rem -1rem rgba(16, 24, 40, 0.18);
+  }
 
+  /* Sur fond clair la profondeur vient du liseré, pas d'un halo lumineux. */
   .card::after {
     content: "";
     position: absolute;
-    inset-inline: 15%;
-    top: -1px;
-    height: 1px;
+    inset-inline: 0;
+    top: 0;
+    height: 2px;
     background: linear-gradient(90deg, transparent, var(--glow, var(--accent)), transparent);
   }
 
@@ -135,29 +161,77 @@
     word-break: break-all;
   }
 
+  /* Progression de la minute en cours : la seule pièce animée par les données. */
+  .minute {
+    margin: 1.1rem auto 0;
+    width: 68%;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  .minute i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.6s linear;
+  }
+
   .commit {
     margin-top: 0.45rem;
     font-size: 0.68rem;
     letter-spacing: 0.04em;
-    color: #6b748c;
+    color: var(--faint);
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   }
 
-  .commit span { color: #97a1b8; }
+  .commit span { color: var(--text); }
 
   .badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     margin-top: 0.9rem;
     padding: 0.3rem 0.75rem;
-    border: 1px solid var(--border);
+    border: 1px solid var(--line);
     border-radius: 999px;
+    background: #f7f9fc;
     font-size: 0.75rem;
     color: var(--muted);
   }
 
+  .dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--accent-3);
+    box-shadow: 0 0 0 3px rgba(13, 143, 107, 0.15);
+    animation: beat 2.4s ease-in-out infinite;
+  }
+
+  .dot.ko {
+    background: var(--danger);
+    box-shadow: 0 0 0 3px rgba(198, 42, 37, 0.15);
+  }
+
+  @keyframes beat {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+
   footer { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.05em; }
 
-  .offline { color: #ff7b7b; }
+  .offline { color: var(--danger); }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    body::before, .dot { animation: none; }
+    .card, .minute i { transition: none; }
+  }
 </style>
 </head>
 <body>
@@ -171,6 +245,7 @@
       <div class="label">Heure locale</div>
       <div class="value" id="time">{{ time }}</div>
       <div class="sub" id="date">{{ date }}</div>
+      <div class="minute" aria-hidden="true"><i id="minute-fill"></i></div>
       <span class="badge" id="tz">{{ timezone }} (UTC{{ offset[:3] }}:{{ offset[3:] }})</span>
     </section>
 
@@ -188,7 +263,9 @@
         {% if views is none %}<span class="offline">redis KO</span>{% else %}{{ views }}{% endif %}
       </div>
       <div class="sub">visites enregistrées</div>
-      <span class="badge">Backend Redis</span>
+      <span class="badge">
+        <span class="dot{% if views is none %} ko{% endif %}"></span>Backend Redis
+      </span>
     </section>
   </main>
 
@@ -202,6 +279,7 @@
   function tick() {
     const el = document.getElementById("time");
     const dateEl = document.getElementById("date");
+    const fill = document.getElementById("minute-fill");
     const now = new Date();
     try {
       el.textContent = now.toLocaleTimeString("fr-FR", { timeZone: tzName, hour12: false });
@@ -211,6 +289,8 @@
     } catch (e) {
       // timezone inconnue du navigateur : on laisse la valeur serveur
     }
+    // Le décalage horaire ne change pas le rang de la seconde dans la minute.
+    fill.style.width = ((now.getSeconds() + 1) / 60 * 100).toFixed(2) + "%";
   }
 
   setInterval(tick, 1000);
